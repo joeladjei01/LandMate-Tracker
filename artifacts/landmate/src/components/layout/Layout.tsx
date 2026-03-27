@@ -1,11 +1,13 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
+import { useAuth } from '@workspace/replit-auth-web';
 import { Button } from '@/components/ui/button';
-import { FaFileAlt, FaSyncAlt } from 'react-icons/fa';
+import { FaFileAlt, FaSyncAlt, FaUserCircle, FaSignOutAlt, FaSignInAlt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function Layout() {
   const { clearSession } = useAppContext();
+  const { user, isLoading, isAuthenticated, login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleNewSession = () => {
@@ -26,7 +28,7 @@ export function Layout() {
             </span>
           </Link>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button 
               variant="outline" 
               onClick={handleNewSession}
@@ -43,6 +45,60 @@ export function Layout() {
             >
               <FaSyncAlt className="h-4 w-4" />
             </Button>
+
+            {!isLoading && (
+              isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                    {user?.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full border border-border object-cover"
+                      />
+                    ) : (
+                      <FaUserCircle className="text-2xl text-muted-foreground" />
+                    )}
+                    <span className="max-w-[120px] truncate">
+                      {user?.firstName || user?.email || 'Account'}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={logout}
+                    className="text-muted-foreground border-border hover:bg-muted/50 hidden sm:flex"
+                  >
+                    <FaSignOutAlt className="mr-2 h-4 w-4" />
+                    Log out
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={logout}
+                    className="text-muted-foreground border-border hover:bg-muted/50 sm:hidden"
+                  >
+                    <FaSignOutAlt className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    onClick={login}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 hidden sm:flex"
+                  >
+                    <FaSignInAlt className="mr-2 h-4 w-4" />
+                    Log in
+                  </Button>
+                  <Button
+                    size="icon"
+                    onClick={login}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 sm:hidden"
+                  >
+                    <FaSignInAlt className="h-4 w-4" />
+                  </Button>
+                </>
+              )
+            )}
           </div>
         </div>
       </header>
