@@ -8,7 +8,7 @@ import { FaFileUpload, FaPaste, FaArrowRight, FaFileAlt } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DocumentUpload() {
-  const { documentText, setDocumentText, setDocumentType, setFileName } = useAppContext();
+  const { documentText, setDocumentText, documentType, setDocumentType, setFileName } = useAppContext();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
