@@ -1,0 +1,17 @@
+packages:
+  "react-router-dom": "Routing for the application as requested in implementation notes"
+  "framer-motion": "Page transitions and scroll-triggered animations for a premium feel"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging Tailwind CSS classes without style conflicts"
+
+images:
+  - path: "artifacts/landmate/public/images/hero-bg.png"
+    description: "Subtle abstract topographic map pattern in deep forest green with faint gold contour lines, clean professional government style"
+    aspect_ratio: "16:9"
+  - path: "artifacts/landmate/public/images/logo.png"
+    description: "Minimal geometric logo mark resembling a stylized land parcel or document in gold and forest green, on transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - "App uses React Router DOM for routing"
+  - "Using AppContext for global state management"

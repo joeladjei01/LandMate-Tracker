@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LandMate API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: landmate
+    description: LandMate AI document analysis
 paths:
   /healthz:
     get:
@@ -24,6 +26,117 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /landmate/analyze:
+    post:
+      operationId: analyzeDocument
+      tags: [landmate]
+      summary: Analyze a land document
+      description: Analyze a document using Claude AI for explanation or red flag detection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeDocumentRequest"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyzeDocumentResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /landmate/process-guidance:
+    post:
+      operationId: getProcessGuidance
+      tags: [landmate]
+      summary: Get GLC process guidance
+      description: Get step-by-step guidance for a GLC process
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessGuidanceRequest"
+      responses:
+        "200":
+          description: Process guidance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessGuidanceResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /landmate/form-assistance:
+    post:
+      operationId: getFormAssistance
+      tags: [landmate]
+      summary: Get GLC form filling assistance
+      description: Get field-by-field guidance for filling a GLC form
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormAssistanceRequest"
+      responses:
+        "200":
+          description: Form assistance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormAssistanceResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /landmate/chat:
+    post:
+      operationId: chatWithLandmate
+      tags: [landmate]
+      summary: Chat with LandMate Q&A
+      description: Ask follow-up questions in context of the analyzed document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +147,268 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
+
+    AnalyzeDocumentRequest:
+      type: object
+      properties:
+        documentText:
+          type: string
+          description: Extracted text from the land document
+        documentType:
+          type: string
+          enum: [indenture, titleDeed, lease, glcForm, unknown]
+        mode:
+          type: string
+          enum: [explain, redFlags]
+        language:
+          type: string
+          enum: [english, twi, pidgin]
+          default: english
+        fileName:
+          type: string
+          description: Original file name for display
+      required:
+        - documentText
+        - documentType
+        - mode
+
+    AnalyzeDocumentResponse:
+      type: object
+      properties:
+        summary:
+          type: string
+        keyPoints:
+          type: array
+          items:
+            type: string
+        importantDates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportantDate"
+        nextSteps:
+          type: array
+          items:
+            type: string
+        redFlags:
+          type: array
+          items:
+            $ref: "#/components/schemas/RedFlag"
+        overallRiskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        documentType:
+          type: string
+        disclaimer:
+          type: string
+      required:
+        - summary
+        - keyPoints
+        - nextSteps
+        - disclaimer
+
+    ImportantDate:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+        daysUntil:
+          type: number
+          nullable: true
+      required:
+        - label
+        - value
+
+    RedFlag:
+      type: object
+      properties:
+        severity:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        issue:
+          type: string
+        explanation:
+          type: string
+        recommendation:
+          type: string
+      required:
+        - severity
+        - issue
+        - explanation
+        - recommendation
+
+    ProcessGuidanceRequest:
+      type: object
+      properties:
+        processName:
+          type: string
+        language:
+          type: string
+          enum: [english, twi, pidgin]
+          default: english
+      required:
+        - processName
+
+    ProcessGuidanceResponse:
+      type: object
+      properties:
+        processName:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessStep"
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        estimatedFees:
+          type: string
+        estimatedDuration:
+          type: string
+        offices:
+          type: array
+          items:
+            type: string
+        disclaimer:
+          type: string
+      required:
+        - processName
+        - steps
+        - disclaimer
+
+    ProcessStep:
+      type: object
+      properties:
+        stepNumber:
+          type: number
+        title:
+          type: string
+        description:
+          type: string
+        office:
+          type: string
+          nullable: true
+        fee:
+          type: string
+          nullable: true
+        documents:
+          type: array
+          items:
+            type: string
+      required:
+        - stepNumber
+        - title
+        - description
+
+    FormAssistanceRequest:
+      type: object
+      properties:
+        documentText:
+          type: string
+        documentType:
+          type: string
+        language:
+          type: string
+          enum: [english, twi, pidgin]
+          default: english
+      required:
+        - documentText
+        - documentType
+
+    FormAssistanceResponse:
+      type: object
+      properties:
+        formName:
+          type: string
+        fieldGuidance:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldGuidance"
+        commonMistakes:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+        disclaimer:
+          type: string
+      required:
+        - formName
+        - fieldGuidance
+        - summary
+        - disclaimer
+
+    FieldGuidance:
+      type: object
+      properties:
+        fieldName:
+          type: string
+        instructions:
+          type: string
+        example:
+          type: string
+          nullable: true
+        required:
+          type: boolean
+      required:
+        - fieldName
+        - instructions
+        - required
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+      required:
+        - role
+        - content
+
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        conversationHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        documentContext:
+          type: string
+          nullable: true
+        documentType:
+          type: string
+          nullable: true
+        language:
+          type: string
+          enum: [english, twi, pidgin]
+          default: english
+      required:
+        - message
+        - conversationHistory
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        disclaimer:
+          type: string
+      required:
+        - response
+        - disclaimer
