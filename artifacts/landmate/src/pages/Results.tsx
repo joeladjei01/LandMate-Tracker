@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
 import { 
   FaExclamationTriangle, FaCheck, FaInfoCircle, FaFileAlt, 
   FaPaperPlane, FaUser, FaRobot, FaCalendarAlt, FaExclamationCircle,
@@ -273,7 +274,26 @@ export default function Results() {
                         {msg.role === 'user' ? <FaUser className="text-xs" /> : <FaRobot className="text-xs text-secondary" />}
                         <span className="text-xs font-bold">{msg.role === 'user' ? 'You' : 'LandMate'}</span>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      {msg.role === 'user' ? (
+                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                      ) : (
+                        <ReactMarkdown
+                          className={cn(
+                            "prose prose-sm max-w-none",
+                            "prose-headings:font-bold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2",
+                            "prose-h3:text-base prose-h3:border-b prose-h3:border-border/60 prose-h3:pb-1",
+                            "prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:my-1.5",
+                            "prose-strong:text-foreground prose-strong:font-semibold",
+                            "prose-ul:my-2 prose-ul:space-y-1 prose-li:text-foreground/85 prose-li:leading-relaxed",
+                            "prose-ol:my-2 prose-ol:space-y-1",
+                            "prose-hr:border-border/40 prose-hr:my-3",
+                            "prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:rounded",
+                            "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                          )}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      )}
                     </div>
                   </div>
                 ))}
