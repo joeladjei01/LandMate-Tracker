@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { useChat } from '@/hooks/use-landmate';
@@ -13,7 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import { 
   FaExclamationTriangle, FaCheck, FaInfoCircle, FaFileAlt, 
   FaPaperPlane, FaUser, FaRobot, FaCalendarAlt, FaExclamationCircle,
-  FaRoute, FaWpforms
+  FaRoute, FaWpforms, FaMicrophone, FaStop
 } from 'react-icons/fa';
 
 export default function Results() {
@@ -24,9 +24,61 @@ export default function Results() {
   } = useAppContext();
   const navigate = useNavigate();
   const [chatMessage, setChatMessage] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
   const chatMutation = useChat();
+
+  const handleMicToggle = useCallback(() => {
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: typeof window.SpeechRecognition }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: typeof window.SpeechRecognition }).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in your browser. Please try Chrome or Edge.");
+      return;
+    }
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognitionRef.current = recognition;
+
+    let finalTranscript = chatMessage;
+
+    recognition.onstart = () => setIsListening(true);
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript = (finalTranscript + " " + transcript).trim();
+        } else {
+          interim = transcript;
+        }
+      }
+      setChatMessage((finalTranscript + (interim ? " " + interim : "")).trim());
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setChatMessage(finalTranscript.trim());
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  }, [isListening, chatMessage]);
 
   useEffect(() => {
     if (!mode || (!analysisResult && !processResult && !formResult)) {
@@ -313,15 +365,58 @@ export default function Results() {
             </ScrollArea>
 
             <div className="p-4 bg-muted/30 border-t shrink-0">
+              {isListening && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-center gap-2 mb-2 max-w-3xl mx-auto"
+                >
+                  <div className="flex items-center gap-1.5">
+                    {[0, 0.15, 0.3, 0.15, 0].map((delay, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1 rounded-full bg-destructive"
+                        animate={{ height: ["8px", "20px", "8px"] }}
+                        transition={{ repeat: Infinity, duration: 0.8, delay, ease: "easeInOut" }}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-destructive">Listening… speak your question</span>
+                </motion.div>
+              )}
               <div className="flex gap-2 max-w-3xl mx-auto">
                 <Input 
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendChat()}
-                  placeholder="Ask a question about your document..."
-                  className="flex-1 h-12 rounded-xl bg-card border-2"
+                  placeholder={isListening ? "Listening…" : "Ask a question about your document…"}
+                  className={cn(
+                    "flex-1 h-12 rounded-xl bg-card border-2 transition-all",
+                    isListening && "border-destructive/60 bg-destructive/5"
+                  )}
                   maxLength={500}
+                  readOnly={isListening}
                 />
+                <Button
+                  size="icon"
+                  type="button"
+                  onClick={handleMicToggle}
+                  className={cn(
+                    "h-12 w-12 rounded-xl shadow-md transition-all",
+                    isListening
+                      ? "bg-destructive hover:bg-destructive/90 text-white"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground border border-border"
+                  )}
+                  title={isListening ? "Stop recording" : "Record voice question"}
+                >
+                  {isListening ? (
+                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}>
+                      <FaStop className="text-sm" />
+                    </motion.div>
+                  ) : (
+                    <FaMicrophone className="text-sm" />
+                  )}
+                </Button>
                 <Button 
                   size="icon" 
                   onClick={handleSendChat}
@@ -331,7 +426,8 @@ export default function Results() {
                   <FaPaperPlane />
                 </Button>
               </div>
-              <div className="text-right max-w-3xl mx-auto mt-1">
+              <div className="flex justify-between max-w-3xl mx-auto mt-1">
+                <span className="text-xs text-muted-foreground">🎤 Tap mic to speak, or type your question</span>
                 <span className="text-xs text-muted-foreground">{chatMessage.length}/500</span>
               </div>
             </div>
