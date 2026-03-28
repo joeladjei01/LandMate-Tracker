@@ -278,18 +278,18 @@ export default function Results() {
                         <p className="text-sm leading-relaxed">{msg.content}</p>
                       ) : (
                         <ReactMarkdown
-                          className={cn(
-                            "prose prose-sm max-w-none",
-                            "prose-headings:font-bold prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2",
-                            "prose-h3:text-base prose-h3:border-b prose-h3:border-border/60 prose-h3:pb-1",
-                            "prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:my-1.5",
-                            "prose-strong:text-foreground prose-strong:font-semibold",
-                            "prose-ul:my-2 prose-ul:space-y-1 prose-li:text-foreground/85 prose-li:leading-relaxed",
-                            "prose-ol:my-2 prose-ol:space-y-1",
-                            "prose-hr:border-border/40 prose-hr:my-3",
-                            "prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:rounded",
-                            "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
-                          )}
+                          components={{
+                            h1: ({ children }) => <h1 className="text-lg font-bold text-foreground mt-4 mb-2 first:mt-0">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-base font-bold text-foreground mt-4 mb-2 first:mt-0">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-sm font-bold text-foreground mt-3 mb-1.5 pb-1 border-b border-border/50 first:mt-0">{children}</h3>,
+                            p: ({ children }) => <p className="text-sm text-foreground/90 leading-relaxed my-1.5 first:mt-0 last:mb-0">{children}</p>,
+                            strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                            ul: ({ children }) => <ul className="my-2 space-y-1 pl-4 list-disc">{children}</ul>,
+                            ol: ({ children }) => <ol className="my-2 space-y-1 pl-4 list-decimal">{children}</ol>,
+                            li: ({ children }) => <li className="text-sm text-foreground/85 leading-relaxed">{children}</li>,
+                            hr: () => <hr className="my-3 border-border/40" />,
+                            code: ({ children }) => <code className="text-primary bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</code>,
+                          }}
                         >
                           {msg.content}
                         </ReactMarkdown>
